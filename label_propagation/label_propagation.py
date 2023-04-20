@@ -1,34 +1,29 @@
-# https://github.com/pyg-team/pytorch_geometric/blob/66b17806b1f4a2008e8be766064d9ef9a883ff03/examples/label_prop.py
+#!/usr/bin/env python
+# coding: utf-8
+
 
 import os.path as osp
 
-from ogb.nodeproppred import Evaluator, PygNodePropPredDataset
+from ogb.nodeproppred import PygNodePropPredDataset
 
 import torch_geometric.transforms as T
 from torch_geometric.nn import LabelPropagation
 
-root = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'OGB')
+
+root = osp.join('data', 'OGB')
 dataset = PygNodePropPredDataset(
     'ogbn-arxiv', root, transform=T.Compose([
         T.ToUndirected(),
         T.ToSparseTensor(),
     ]))
 split_idx = dataset.get_idx_split()
-evaluator = Evaluator(name='ogbn-arxiv')
 data = dataset[0]
 
 model = LabelPropagation(num_layers=3, alpha=0.9)
+
+
 out = model(data.y, data.adj_t, mask=split_idx['train'])
-
 y_pred = out.argmax(dim=-1, keepdim=True)
-
-val_acc = evaluator.eval({
-    'y_true': data.y[split_idx['valid']],
-    'y_pred': y_pred[split_idx['valid']],
-})['acc']
-test_acc = evaluator.eval({
-    'y_true': data.y[split_idx['test']],
-    'y_pred': y_pred[split_idx['test']],
-})['acc']
-
-print(f'Val: {val_acc:.4f}, Test: {test_acc:.4f}')
+for k in ['valid', 'test']:
+    print(k, (data.y[split_idx[k]] == y_pred[split_idx[k]]).sum() /
+          split_idx[k].shape[0])
