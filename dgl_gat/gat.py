@@ -126,7 +126,6 @@ def main():
     print(sum([np.prod(p.size()) for p in model.parameters() if p.requires_grad]))
 
     trainer = pl.Trainer(
-        default_root_dir="../data",
         accelerator="auto",
         max_epochs=n_epochs,
         log_every_n_steps=1,
