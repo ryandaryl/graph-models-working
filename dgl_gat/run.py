@@ -18,7 +18,7 @@ n_hidden = 256
 n_heads = 3
 dropout = 0.75
 attn_drop = 0.05
-norm = "none" # "both"
+norm = "none"  # "both"
 
 datamodule = DataModule("ogbn-arxiv", use_labels=True)
 data = DglNodePropPredDataset("ogbn-arxiv")

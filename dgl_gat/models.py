@@ -73,8 +73,10 @@ class GCN(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.RMSprop(self.parameters(), lr=0.002, weight_decay=0)
-        return ([optimizer],
-                [optim.lr_scheduler.LinearLR(optimizer, start_factor=1/50)])
+        return (
+            [optimizer],
+            [optim.lr_scheduler.LinearLR(optimizer, start_factor=1 / 50)],
+        )
 
     def training_step(self, batch, batch_idx):
         graph, feat, labels, idx = batch[0]
@@ -121,15 +123,22 @@ class GATConv(nn.Module):
     ):
         super(GATConv, self).__init__()
         if norm not in ("none", "both"):
-            raise DGLError('Invalid norm value. Must be either "none", "both".' ' But got "{}".'.format(norm))
+            raise DGLError(
+                'Invalid norm value. Must be either "none", "both".'
+                ' But got "{}".'.format(norm)
+            )
         self._num_heads = num_heads
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
         self._allow_zero_in_degree = allow_zero_in_degree
         self._norm = norm
         if isinstance(in_feats, tuple):
-            self.fc_src = nn.Linear(self._in_src_feats, out_feats * num_heads, bias=False)
-            self.fc_dst = nn.Linear(self._in_dst_feats, out_feats * num_heads, bias=False)
+            self.fc_src = nn.Linear(
+                self._in_src_feats, out_feats * num_heads, bias=False
+            )
+            self.fc_dst = nn.Linear(
+                self._in_dst_feats, out_feats * num_heads, bias=False
+            )
         else:
             self.fc = nn.Linear(self._in_src_feats, out_feats * num_heads, bias=False)
         self.attn_l = nn.Parameter(torch.FloatTensor(size=(1, num_heads, out_feats)))
@@ -139,7 +148,9 @@ class GATConv(nn.Module):
         self.leaky_relu = nn.LeakyReLU(negative_slope)
         if residual:
             if self._in_dst_feats != out_feats:
-                self.res_fc = nn.Linear(self._in_dst_feats, num_heads * out_feats, bias=False)
+                self.res_fc = nn.Linear(
+                    self._in_dst_feats, num_heads * out_feats, bias=False
+                )
             else:
                 self.res_fc = Identity()
         else:
@@ -179,7 +190,9 @@ class GATConv(nn.Module):
             else:
                 h_src = h_dst = self.feat_drop(feat)
                 feat_src, feat_dst = h_src, h_dst
-                feat_src = feat_dst = self.fc(h_src).view(-1, self._num_heads, self._out_feats)
+                feat_src = feat_dst = self.fc(h_src).view(
+                    -1, self._num_heads, self._out_feats
+                )
                 if graph.is_block:
                     feat_dst = feat_src[: graph.number_of_dst_nodes()]
 
@@ -232,7 +245,17 @@ class GATConv(nn.Module):
 
 class GAT(pl.LightningModule):
     def __init__(
-        self, in_feats, n_classes, n_hidden, n_layers, n_heads, activation, dropout=0.0, attn_drop=0.0, norm="none", val_metric=None,
+        self,
+        in_feats,
+        n_classes,
+        n_hidden,
+        n_layers,
+        n_heads,
+        activation,
+        dropout=0.0,
+        attn_drop=0.0,
+        norm="none",
+        val_metric=None,
     ):
         super().__init__()
         self.in_feats = in_feats
@@ -253,9 +276,19 @@ class GAT(pl.LightningModule):
             # in_channels = n_heads if i > 0 else 1
             out_channels = n_heads
 
-            self.convs.append(GATConv(in_hidden, out_hidden, num_heads=n_heads, attn_drop=attn_drop, norm=norm))
+            self.convs.append(
+                GATConv(
+                    in_hidden,
+                    out_hidden,
+                    num_heads=n_heads,
+                    attn_drop=attn_drop,
+                    norm=norm,
+                )
+            )
 
-            self.linear.append(nn.Linear(in_hidden, out_channels * out_hidden, bias=False))
+            self.linear.append(
+                nn.Linear(in_hidden, out_channels * out_hidden, bias=False)
+            )
             if i < n_layers - 1:
                 self.bns.append(nn.BatchNorm1d(out_channels * out_hidden))
 
@@ -288,8 +321,10 @@ class GAT(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.RMSprop(self.parameters(), lr=0.002, weight_decay=0)
-        return ([optimizer],
-                [optim.lr_scheduler.LinearLR(optimizer, start_factor=1/50)])
+        return (
+            [optimizer],
+            [optim.lr_scheduler.LinearLR(optimizer, start_factor=1 / 50)],
+        )
 
     def training_step(self, batch, batch_idx):
         graph, feat, labels, idx = batch[0]
