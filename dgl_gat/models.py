@@ -306,20 +306,8 @@ class GAT(pl.LightningModule):
         return loss
 
 
-def add_labels(feat, labels, idx, n_classes):
-    onehot = torch.zeros([feat.shape[0], n_classes])
-    onehot[idx, labels[idx, 0]] = 1
-    return torch.cat([feat, onehot], dim=-1)
-
-
 def cross_entropy(x, labels):
     epsilon = 1 - math.log(2)
     y = F.cross_entropy(x, labels[:, 0], reduction="none")
     y = torch.log(epsilon + y) - math.log(epsilon)
     return torch.mean(y)
-
-
-def compute_acc(pred, labels, evaluator):
-    return evaluator.eval(
-        {"y_pred": pred.argmax(dim=-1, keepdim=True), "y_true": labels}
-    )["acc"]
