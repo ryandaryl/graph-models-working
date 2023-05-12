@@ -12,6 +12,17 @@ def compute_acc(pred, labels, evaluator):
     )["acc"]
 
 
+def compute_accuracy_train_val_test(pred, labels, idx, split_idx):
+    return {
+        f"{stage}_acc": compute_acc(
+            pred[split_idx[stage]],
+            labels[split_idx[stage]],
+            evaluator=Evaluator(name="ogbn-arxiv"),
+        )
+        for stage in ["train", "valid", "test"]
+    }
+
+
 n_epochs = 100
 n_layers = 3
 n_hidden = 256
@@ -32,15 +43,9 @@ datamodule = DataModule(
     n_classes=n_classes,
 )
 in_feats = graph.ndata["feat"].shape[1]
-
-accuracy = lambda pred, labels, idx: {
-    f"{stage}_acc": compute_acc(
-        pred[getattr(datamodule, f"{stage}_idx")],
-        labels[getattr(datamodule, f"{stage}_idx")],
-        evaluator=Evaluator(name="ogbn-arxiv"),
-    )
-    for stage in ["train", "val", "test"]
-}
+accuracy = lambda pred, labels, idx: compute_accuracy_train_val_test(
+    pred, labels, idx, split_idx
+)
 
 model = GCN(
     in_feats=in_feats + n_classes,

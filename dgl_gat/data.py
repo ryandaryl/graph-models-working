@@ -16,7 +16,7 @@ class DataModule(pl.LightningDataModule):
         self.graph = graph
         self.labels = labels
         self.train_idx = split_idx["train"]
-        self.val_idx = split_idx["valid"]
+        self.valid_idx = split_idx["valid"]
         self.test_idx = split_idx["test"]
         self.n_classes = n_classes
         self.mask_rate = mask_rate
@@ -45,7 +45,7 @@ class DataModule(pl.LightningDataModule):
         if self.use_labels:
             feat = add_labels(feat, self.labels, self.train_idx, self.n_classes)
         return torch.utils.data.DataLoader(
-            [(self.graph, feat, self.labels, self.val_idx)],
+            [(self.graph, feat, self.labels, self.valid_idx)],
             collate_fn=lambda data: data,
         )
 
