@@ -23,25 +23,21 @@ norm = "none"  # "both"
 data = DglNodePropPredDataset("ogbn-arxiv")
 graph, labels = data[0]
 split_idx = data.get_idx_split()
-num_classes = data.num_classes
-
+n_classes = data.num_classes
 datamodule = DataModule(
     use_labels=True,
     split_idx=split_idx,
     labels=labels,
     graph=graph,
-    num_classes=num_classes,
+    n_classes=n_classes,
 )
-
 in_feats = graph.ndata["feat"].shape[1]
-n_classes = (labels.max() + 1).item()
 
-evaluator = Evaluator(name="ogbn-arxiv")
 accuracy = lambda pred, labels, idx: {
     f"{stage}_acc": compute_acc(
         pred[getattr(datamodule, f"{stage}_idx")],
         labels[getattr(datamodule, f"{stage}_idx")],
-        evaluator,
+        evaluator=Evaluator(name="ogbn-arxiv"),
     )
     for stage in ["train", "val", "test"]
 }

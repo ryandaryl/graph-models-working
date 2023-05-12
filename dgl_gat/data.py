@@ -8,7 +8,7 @@ class DataModule(pl.LightningDataModule):
         graph,
         labels,
         split_idx=None,
-        num_classes=None,
+        n_classes=None,
         mask_rate=0.5,
         use_labels=False,
     ):
@@ -18,7 +18,7 @@ class DataModule(pl.LightningDataModule):
         self.train_idx = split_idx["train"]
         self.val_idx = split_idx["valid"]
         self.test_idx = split_idx["test"]
-        self.n_classes = num_classes
+        self.n_classes = n_classes
         self.mask_rate = mask_rate
         self.use_labels = use_labels
 
