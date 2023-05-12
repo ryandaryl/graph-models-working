@@ -20,9 +20,19 @@ dropout = 0.75
 attn_drop = 0.05
 norm = "none"  # "both"
 
-datamodule = DataModule("ogbn-arxiv", use_labels=True)
 data = DglNodePropPredDataset("ogbn-arxiv")
 graph, labels = data[0]
+split_idx = data.get_idx_split()
+num_classes = data.num_classes
+
+datamodule = DataModule(
+    use_labels=True,
+    split_idx=split_idx,
+    labels=labels,
+    graph=graph,
+    num_classes=num_classes,
+)
+
 in_feats = graph.ndata["feat"].shape[1]
 n_classes = (labels.max() + 1).item()
 

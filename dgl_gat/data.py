@@ -1,32 +1,32 @@
 import torch
-from ogb.nodeproppred import DglNodePropPredDataset
 import pytorch_lightning as pl
 
 
 class DataModule(pl.LightningDataModule):
-    def __init__(self, ogbn_name, mask_rate=0.5, use_labels=False):
+    def __init__(
+        self,
+        graph,
+        labels,
+        split_idx=None,
+        num_classes=None,
+        mask_rate=0.5,
+        use_labels=False,
+    ):
         super().__init__()
-        self.mask_rate = mask_rate
-        self.ogbn_name = ogbn_name
-        self.use_labels = use_labels
-        self.graph = None
-        self.labels = None
-        data = DglNodePropPredDataset(name=self.ogbn_name)
-        split_idx = data.get_idx_split()
+        self.graph = graph
+        self.labels = labels
         self.train_idx = split_idx["train"]
         self.val_idx = split_idx["valid"]
         self.test_idx = split_idx["test"]
-        self.n_classes = int(data.num_classes)
+        self.n_classes = num_classes
+        self.mask_rate = mask_rate
+        self.use_labels = use_labels
 
     def setup(self, stage):
-        data = DglNodePropPredDataset(name=self.ogbn_name)
-        graph, labels = data[0]
-        srcs, dsts = graph.all_edges()
-        graph.add_edges(dsts, srcs)
-        graph = graph.remove_self_loop().add_self_loop()
-        print(f"Total edges after adding self-loop {graph.number_of_edges()}")
-        self.graph = graph
-        self.labels = labels
+        srcs, dsts = self.graph.all_edges()
+        self.graph.add_edges(dsts, srcs)
+        self.graph = self.graph.remove_self_loop().add_self_loop()
+        print(f"Total edges after adding self-loop {self.graph.number_of_edges()}")
 
     def train_dataloader(self):
         feat = self.graph.ndata["feat"]
