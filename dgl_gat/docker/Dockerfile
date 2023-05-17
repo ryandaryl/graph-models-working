@@ -16,3 +16,7 @@ RUN wget https://julialang-s3.julialang.org/bin/linux/x64/1.8/julia-1.8.5-linux-
     && tar zxvf julia-1.8.5-linux-x86_64.tar.gz
 RUN ln -s /opt/julia-1.8.5/bin/julia /usr/bin/julia \
 	&& julia -e 'import Pkg; Pkg.add("LinearMaps"); Pkg.add("MAT"); Pkg.add("Arpack")'
+RUN wget https://nodejs.org/dist/v18.16.0/node-v18.16.0-linux-x64.tar.xz
+RUN tar -xf node-v18.16.0-linux-x64.tar.xz
+RUN cd node-v18.16.0-linux-x64/bin && cp node /usr/bin && cp npm /usr/bin
+RUN python -m pip install plotly ipywidgets pandas jupyter

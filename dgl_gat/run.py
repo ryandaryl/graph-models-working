@@ -27,6 +27,24 @@ def compute_accuracy_train_val_test(pred, labels, idx, split_idx):
     }
 
 
+from plotly import graph_objects as go
+from plotly import express as px
+import numpy as np
+
+fig = go.FigureWidget(px.line(y=[0], x=[0], range_x=[0, 100]))
+
+
+def thing(trainer, _):
+    fig.data[0].y = np.append(
+        fig.data[0].y, trainer.callback_metrics["train_acc"].cpu()
+    )
+    fig.data[0].x = np.append(fig.data[0].x, trainer.current_epoch)
+
+
+loss_callback = pl.callbacks.LambdaCallback(on_train_epoch_end=thing)
+fig
+
+
 data = DglNodePropPredDataset("ogbn-arxiv")
 graph, labels = data[0]
 split_idx = data.get_idx_split()
@@ -53,11 +71,7 @@ model = GCN(
     val_metric=accuracy,
 )
 
-trainer = pl.Trainer(
-    accelerator="auto",
-    max_epochs=100,
-    log_every_n_steps=1,
-)
+trainer = pl.Trainer(accelerator="auto", max_epochs=100, callbacks=[loss_callback])
 trainer.fit(model, datamodule=datamodule)
 
 
