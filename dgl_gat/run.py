@@ -1,10 +1,15 @@
-import torch
-import pytorch_lightning as pl
-import torch.nn.functional as F
-from ogb.nodeproppred import DglNodePropPredDataset, Evaluator
-from models import GCN, GAT
-from data import DataModule
 import warnings
+from data import DataModule
+from models import GCN, GAT
+import numpy as np
+from ogb.nodeproppred import DglNodePropPredDataset, Evaluator
+import pandas as pd
+from plotly import express as px
+from plotly import graph_objects as go
+import pytorch_lightning as pl
+import torch
+import torch.nn.functional as F
+
 
 torch.set_float32_matmul_precision("medium")
 warnings.filterwarnings("ignore")
@@ -27,22 +32,17 @@ def compute_accuracy_train_val_test(pred, labels, idx, split_idx):
     }
 
 
-from plotly import graph_objects as go
-from plotly import express as px
-import numpy as np
-
-fig = go.FigureWidget(px.line(y=[0], x=[0], range_x=[0, 100]))
+fig = go.FigureWidget(
+    px.line(pd.DataFrame({"train": [0], "valid": [0], "test": [0]}), range_x=[0, 100])
+)
 
 
-def thing(trainer, _):
-    fig.data[0].y = np.append(
-        fig.data[0].y, trainer.callback_metrics["train_acc"].cpu()
-    )
-    fig.data[0].x = np.append(fig.data[0].x, trainer.current_epoch)
-
-
-loss_callback = pl.callbacks.LambdaCallback(on_train_epoch_end=thing)
-fig
+def update_figure(trainer, _):
+    for line in fig.data:
+        line.y = np.append(
+            line.y, trainer.callback_metrics[f"{line.legendgroup}_acc"].cpu()
+        )
+        line.x = np.append(line.x, trainer.current_epoch)
 
 
 data = DglNodePropPredDataset("ogbn-arxiv")
@@ -70,8 +70,15 @@ model = GCN(
     use_linear=False,
     val_metric=accuracy,
 )
+fig
 
-trainer = pl.Trainer(accelerator="auto", max_epochs=100, callbacks=[loss_callback])
+
+trainer = pl.Trainer(
+    accelerator="auto",
+    max_epochs=100,
+    callbacks=[pl.callbacks.LambdaCallback(on_train_epoch_end=update_figure)],
+    enable_progress_bar=False,
+)
 trainer.fit(model, datamodule=datamodule)
 
 

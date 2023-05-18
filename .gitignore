@@ -3,4 +3,3 @@ dgl_gat/dataset
 dgl_gat/lightning_logs
 .ipynb_checkpoints
 __pycache__
-*.ipynb
