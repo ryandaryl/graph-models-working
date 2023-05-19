@@ -1,6 +1,6 @@
 import warnings
-from data import DataModule
-from models import GCN, GAT
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 from ogb.nodeproppred import DglNodePropPredDataset, Evaluator
 import pandas as pd
@@ -9,6 +9,10 @@ from plotly import graph_objects as go
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from data import DataModule
+from models import GCN, GAT
+
+get_ipython().run_line_magic("matplotlib", "inline")
 
 
 torch.set_float32_matmul_precision("medium")
@@ -56,6 +60,45 @@ datamodule = DataModule(
     graph=graph,
     n_classes=n_classes,
 )
+
+
+n_rows, n_cols = 1, 1
+max_hops = 3
+max_outer_nodes = 10
+fig = plt.subplots(n_rows, n_cols, figsize=(10, 6))[0]
+source_id = 0
+G = graph.to_networkx()
+path_lengths = np.array(
+    list(
+        nx.single_source_shortest_path_length(
+            G.to_undirected(), source_id, cutoff=max_hops
+        ).items()
+    )
+)
+subgraph = nx.Graph(nx.induced_subgraph(G, path_lengths[:, 0]))
+path_lengths_outer = path_lengths[path_lengths[:, 1] == path_lengths[:, 1].max()]
+np.random.shuffle(path_lengths)
+subgraph.add_edges_from(
+    [(target_id, 999) for target_id in path_lengths_outer[:max_outer_nodes, 0]]
+)
+paths = nx.all_shortest_paths(subgraph, source_id, 999)
+node_ids = list(set(sum([path[:-1] for path in paths if source_id in path], [])))
+shells = [[] for _ in range(path_lengths[:, 1].max() + 1)]
+for node_id, path_length in path_lengths:
+    shells[path_length].append(node_id)
+subgraph = nx.Graph(nx.induced_subgraph(G, node_ids))
+print(subgraph)
+subgraph.remove_node(source_id)
+nx.draw_networkx(
+    subgraph,
+    nx.shell_layout(subgraph, shells),
+    ax=fig.axes[0],
+    with_labels=False,
+    node_size=20,
+    edge_color="#aaaaaa",
+)
+
+
 accuracy = lambda pred, labels, idx: compute_accuracy_train_val_test(
     pred, labels, idx, split_idx
 )
