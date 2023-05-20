@@ -1,7 +1,10 @@
 import warnings
+import os
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+
+os.environ["DGLBACKEND"] = "pytorch"
 from ogb.nodeproppred import DglNodePropPredDataset, Evaluator
 import pandas as pd
 from plotly import express as px
