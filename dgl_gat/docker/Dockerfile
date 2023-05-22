@@ -8,7 +8,7 @@ RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-
 RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz \
     && tar xvf Python-${PYTHON_VERSION}.tar.xz && cd Python-${PYTHON_VERSION} && ./configure && make altinstall
 RUN cp Python-${PYTHON_VERSION}/python /usr/bin
-RUN python -m pip install torch==2.0.0+cpu torchvision==0.15.2+cpu torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+RUN python -m pip install torch==2.0.0+cpu torchvision==0.15.1+cpu torchaudio==2.0.1 --index-url https://download.pytorch.org/whl/cpu
 RUN python -m pip install torch_geometric==2.3.1 torch_scatter==2.1.1 torch_sparse==0.6.17 \
     torch_cluster==1.6.1 torch_spline_conv==1.2.2
 RUN python -m pip install ogb==1.3.6 julia optuna dgl==1.1.0 pytorch_lightning==2.0.2 # -f https://data.dgl.ai/wheels/cu118/repo.html
@@ -19,4 +19,4 @@ RUN ln -s /opt/julia-1.8.5/bin/julia /usr/bin/julia \
 RUN wget https://nodejs.org/dist/v18.16.0/node-v18.16.0-linux-x64.tar.xz
 RUN tar -xf node-v18.16.0-linux-x64.tar.xz
 RUN cd node-v18.16.0-linux-x64/bin && cp node /usr/bin && cp npm /usr/bin
-RUN python -m pip install plotly ipywidgets pandas jupyterlab matplotlib
+RUN python -m pip install plotly ipywidgets pandas jupyterlab jupyter matplotlib
