@@ -65,12 +65,12 @@ def draw_networkx_plotly(G, edges, layout):
     return px.line(df, x="x", y="y", hover_data=hover_data, markers=True)
 
 
-def edges_for_hops(G, source_id, max_hops, device):
+def edges_for_hops(graph, G, source_id, n_hops, device):
     max_outer_nodes = 10
     path_lengths = np.array(
         list(
             nx.single_source_shortest_path_length(
-                G.to_undirected(), source_id, cutoff=max_hops
+                G.to_undirected(), source_id, cutoff=n_hops
             ).items()
         )
     )
@@ -96,6 +96,7 @@ def edges_for_hops(G, source_id, max_hops, device):
 
 data = DglNodePropPredDataset("ogbn-arxiv")
 graph, labels = data[0]
+G = graph.to_networkx()
 split_idx = data.get_idx_split()
 n_classes = data.num_classes
 datamodule = DataModule(
@@ -107,10 +108,9 @@ datamodule = DataModule(
 )
 
 
-max_hops = 3
+n_hops = 3
 source_id = 0
-G = graph.to_networkx()
-edges, layout = edges_for_hops(G, source_id, max_hops, device="cpu")
+edges, layout = edges_for_hops(graph, G, source_id, n_hops, device="cpu")
 draw_networkx_plotly(G, edges, layout)
 
 
