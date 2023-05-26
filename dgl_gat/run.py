@@ -49,7 +49,7 @@ def update_figure(trainer, _):
         line.x = np.append(line.x, trainer.current_epoch)
 
 
-def draw_networkx_plotly(G, edges, layout):
+def draw_networkx_plotly(G, edges, layout, metadata=None):
     row_dicts = []
     for source, target in edges.tolist():
         for x, y, node_id in [
@@ -58,9 +58,10 @@ def draw_networkx_plotly(G, edges, layout):
             [None] * 3,
         ]:
             row_dict = {"x": x, "y": y, "id": node_id}
-            row_dict["degree"] = None if node_id is None else G.degree(node_id)
             row_dicts.append(row_dict)
     df = pd.DataFrame.from_dict(row_dicts)
+    if metadata is not None:
+        df = df.merge(metadata, on="id", how="left")
     hover_data = [c for c in df.columns if c not in ["x", "y"]]
     return px.line(df, x="x", y="y", hover_data=hover_data, markers=True)
 
@@ -111,7 +112,17 @@ datamodule = DataModule(
 n_hops = 3
 source_id = 0
 edges, layout = edges_for_hops(graph, G, source_id, n_hops, device="cpu")
-draw_networkx_plotly(G, edges, layout)
+metadata = pd.DataFrame.from_dict(
+    [
+        {
+            "id": node_id,
+            "degree": G.degree(node_id),
+            "label": labels[node_id],
+        }
+        for node_id in edges.unique().tolist()
+    ]
+)
+draw_networkx_plotly(G, edges, layout, metadata)
 
 
 accuracy = lambda pred, labels, idx: compute_accuracy_train_val_test(
