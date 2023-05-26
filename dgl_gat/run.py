@@ -66,8 +66,9 @@ def draw_networkx_plotly(G, edges, layout, metadata=None):
     return px.line(df, x="x", y="y", hover_data=hover_data, markers=True)
 
 
-def edges_for_hops(graph, G, source_id, n_hops, device):
-    max_outer_nodes = 10
+def edges_for_hops(graph, G, source_id, max_per_hop, device):
+    n_hops = len(max_per_hop)
+    max_outer_nodes = max_per_hop[-1]
     path_lengths = np.array(
         list(
             nx.single_source_shortest_path_length(
@@ -109,9 +110,9 @@ datamodule = DataModule(
 )
 
 
-n_hops = 3
 source_id = 0
-edges, layout = edges_for_hops(graph, G, source_id, n_hops, device="cpu")
+max_per_hop = [20, 40, 80]
+edges, layout = edges_for_hops(graph, G, source_id, max_per_hop, device="cpu")
 metadata = pd.DataFrame.from_dict(
     [
         {
