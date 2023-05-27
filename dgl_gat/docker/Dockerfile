@@ -1,7 +1,7 @@
 FROM nvidia/cuda:11.7.1-runtime-ubuntu22.04
 RUN echo > /etc/apt/sources.list.d/cuda.list # Ignore CUDA GPG keys
 WORKDIR /opt/
-ENV PYTHON_VERSION='3.8.10'
+ENV PYTHON_VERSION='3.11.3'
 RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget curl unzip \
    build-essential openssh-client gcc libdb-dev libleveldb-dev libsodium-dev zlib1g-dev libtinfo-dev \
    libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev liblzma-dev
