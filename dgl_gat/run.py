@@ -49,7 +49,7 @@ def update_figure(trainer, _):
         line.x = np.append(line.x, trainer.current_epoch)
 
 
-def draw_networkx_plotly(G, edges, layout, metadata=None):
+def draw_networkx_plotly(G, edges, layout, metadata=None, **kwargs):
     row_dicts = []
     for source, target in edges.tolist():
         for x, y, node_id in [
@@ -63,7 +63,10 @@ def draw_networkx_plotly(G, edges, layout, metadata=None):
     if metadata is not None:
         df = df.merge(metadata, on="id", how="left")
     hover_data = [c for c in df.columns if c not in ["x", "y"]]
-    return px.line(df, x="x", y="y", hover_data=hover_data, markers=True)
+    fig = px.line(df, x="x", y="y", hover_data=hover_data, markers=True, **kwargs)
+    if "color" not in kwargs:
+        fig.update_traces(line_color="#aaaaaa", marker_color="#000000")
+    return fig
 
 
 def edges_for_hops(graph, G, source_id, max_per_hop, device):
