@@ -71,29 +71,15 @@ def draw_networkx_plotly(G, edges, layout, metadata=None, **kwargs):
 
 def edges_for_hops(graph, G, source_id, max_per_hop, device):
     n_hops = len(max_per_hop)
-    max_outer_nodes = max_per_hop[-1]
-    path_lengths = np.array(
-        list(
-            nx.single_source_shortest_path_length(
-                G.to_undirected(), source_id, cutoff=n_hops
-            ).items()
-        )
+    path_lengths = nx.single_source_shortest_path_length(
+        G.to_undirected(), source_id, cutoff=n_hops
     )
-    subgraph = nx.Graph(nx.induced_subgraph(G, path_lengths[:, 0]))
-    path_lengths_outer = path_lengths[path_lengths[:, 1] == path_lengths[:, 1].max()]
-    np.random.shuffle(path_lengths)
-    subgraph.add_edges_from(
-        [(target_id, 999) for target_id in path_lengths_outer[:max_outer_nodes, 0]]
-    )
-    paths = nx.all_shortest_paths(subgraph, source_id, 999)
-    node_ids = list(set(sum([path[:-1] for path in paths if source_id in path], [])))
-    shells = [[] for _ in range(path_lengths[:, 1].max() + 1)]
-    for node_id, path_length in path_lengths:
-        shells[path_length].append(node_id)
-    subgraph = nx.Graph(nx.induced_subgraph(G, node_ids))
-    subgraph.remove_node(source_id)
-    edges = torch.tensor(
-        nx.to_pandas_edgelist(subgraph)[["source", "target"]].to_numpy(), device=device
+    shells = pd.DataFrame(path_lengths.items()).groupby(1)[0].apply(list).tolist()
+    subgraph = nx.Graph(nx.induced_subgraph(G, path_lengths.keys()))
+    edges = (
+        nx.to_pandas_edgelist(subgraph)[["source", "target"]]
+        .sample(n=sum(max_per_hop))
+        .to_numpy()
     )
     layout = nx.shell_layout(subgraph, shells)
     return edges, layout
@@ -123,7 +109,7 @@ metadata = pd.DataFrame.from_dict(
             "degree": G.degree(node_id),
             "label": labels[node_id],
         }
-        for node_id in edges.unique().tolist()
+        for node_id in np.unique(edges).tolist()
     ]
 )
 draw_networkx_plotly(G, edges, layout, metadata)
