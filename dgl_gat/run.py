@@ -50,20 +50,18 @@ def update_figure(trainer, _):
 
 
 def draw_networkx_plotly(G, edges, layout, metadata=None, **kwargs):
-    row_dicts = []
-    for source, target in edges.tolist():
-        for x, y, node_id in [
-            layout[source].tolist() + [source],
-            layout[target].tolist() + [target],
-            [None] * 3,
-        ]:
-            row_dict = {"x": x, "y": y, "id": node_id}
-            row_dicts.append(row_dict)
-    df = pd.DataFrame.from_dict(row_dicts)
+    coords = pd.DataFrame(
+        {"id": pd.concat([edges["source"], edges["target"]])}
+    ).sort_index(kind="merge")
+    for i, axis in enumerate(["x", "y"]):
+        coords[axis] = coords["id"].apply(lambda x: layout[x][i])
     if metadata is not None:
-        df = df.merge(metadata, on="id", how="left")
-    hover_data = [c for c in df.columns if c not in ["x", "y"]]
-    fig = px.line(df, x="x", y="y", hover_data=hover_data, markers=True, **kwargs)
+        coords = coords.reset_index().merge(metadata, on="id").set_index("index")
+    coords = pd.concat(
+        [coords, pd.DataFrame({"id": [None] * (len(coords) // 2)})]
+    ).sort_index(kind="merge")
+    hover_data = [c for c in coords.columns if c not in ["x", "y"]]
+    fig = px.line(coords, x="x", y="y", hover_data=hover_data, markers=True, **kwargs)
     if "color" not in kwargs:
         fig.update_traces(line_color="#aaaaaa", marker_color="#000000")
     return fig
@@ -76,10 +74,8 @@ def edges_for_hops(graph, G, source_id, max_per_hop, device):
     )
     shells = pd.DataFrame(path_lengths.items()).groupby(1)[0].apply(list).tolist()
     subgraph = nx.Graph(nx.induced_subgraph(G, path_lengths.keys()))
-    edges = (
-        nx.to_pandas_edgelist(subgraph)[["source", "target"]]
-        .sample(n=sum(max_per_hop))
-        .to_numpy()
+    edges = nx.to_pandas_edgelist(subgraph)[["source", "target"]].sample(
+        n=sum(max_per_hop)
     )
     layout = nx.shell_layout(subgraph, shells)
     return edges, layout
@@ -107,7 +103,7 @@ metadata = pd.DataFrame.from_dict(
         {
             "id": node_id,
             "degree": G.degree(node_id),
-            "label": labels[node_id],
+            "label": labels[node_id].item(),
         }
         for node_id in np.unique(edges).tolist()
     ]
