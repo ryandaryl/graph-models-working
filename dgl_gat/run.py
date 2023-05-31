@@ -67,6 +67,29 @@ def draw_networkx_plotly(G, edges, layout, metadata=None, **kwargs):
     return fig
 
 
+def draw_heatmap_plotly(feat, metadata):
+    y = torch.arange(metadata.shape[0]).unsqueeze(1).repeat([1, feat.shape[1]])
+    x = torch.arange(feat.shape[1]).unsqueeze(0).repeat([metadata.shape[0], 1])
+    metadata_columns = [
+        f"{name}: %(customdata[{i}])" for i, name in enumerate(metadata.columns)
+    ]
+    return go.Figure(
+        data=go.Heatmap(
+            x=x.flatten().tolist(),
+            z=feat.flatten().tolist(),
+            y=y.flatten().tolist(),
+            customdata=torch.tensor(metadata.to_numpy())
+            .unsqueeze(1)
+            .repeat([1, feat.shape[1], 1])
+            .flatten(end_dim=1)
+            .numpy(),
+            hovertemplate="<br>".join(["feat: %{z}"] + metadata_columns)
+            .replace("(", "{")
+            .replace(")", "}"),
+        )
+    )
+
+
 def edges_for_hops(graph, G, source_id, max_per_hop, device):
     n_hops = len(max_per_hop)
     path_lengths = nx.single_source_shortest_path_length(
@@ -83,6 +106,8 @@ def edges_for_hops(graph, G, source_id, max_per_hop, device):
 
 data = DglNodePropPredDataset("ogbn-arxiv")
 graph, labels = data[0]
+feat = graph.ndata["feat"]
+feat_normalised = (feat - feat.mean(dim=0)) / feat.std(dim=0)
 G = graph.to_networkx()
 split_idx = data.get_idx_split()
 n_classes = data.num_classes
@@ -108,7 +133,8 @@ metadata = pd.DataFrame.from_dict(
         for node_id in np.unique(edges).tolist()
     ]
 )
-draw_networkx_plotly(G, edges, layout, metadata)
+draw_networkx_plotly(G, edges, layout, metadata).show()
+draw_heatmap_plotly(feat_normalised[metadata["id"]], metadata).show()
 
 
 accuracy = lambda pred, labels, idx: compute_accuracy_train_val_test(
