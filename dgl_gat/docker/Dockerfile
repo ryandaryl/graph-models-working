@@ -19,4 +19,4 @@ RUN ln -s /opt/julia-1.8.5/bin/julia /usr/bin/julia \
 RUN wget https://nodejs.org/dist/v18.16.0/node-v18.16.0-linux-x64.tar.xz
 RUN tar -xf node-v18.16.0-linux-x64.tar.xz
 RUN cd node-v18.16.0-linux-x64/bin && cp node /usr/bin && cp npm /usr/bin
-RUN python -m pip install plotly ipywidgets pandas jupyterlab jupyter matplotlib
+RUN python -m pip install plotly ipywidgets pandas jupyterlab jupyter kaleido

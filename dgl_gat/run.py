@@ -56,7 +56,7 @@ def draw_networkx_plotly(G, edges, layout, metadata=None, **kwargs):
     for i, axis in enumerate(["x", "y"]):
         coords[axis] = coords["id"].apply(lambda x: layout[x][i])
     if metadata is not None:
-        coords = coords.reset_index().merge(metadata, on="id").set_index("index")
+        coords = coords.merge(metadata, on="id").set_index("index")
     coords = pd.concat(
         [coords, pd.DataFrame({"id": [None] * (len(coords) // 2)})]
     ).sort_index(kind="merge")
@@ -123,15 +123,19 @@ datamodule = DataModule(
 source_id = 0
 max_per_hop = [20, 40, 80]
 edges, layout = edges_for_hops(graph, G, source_id, max_per_hop, device="cpu")
-metadata = pd.DataFrame.from_dict(
-    [
-        {
-            "id": node_id,
-            "degree": G.degree(node_id),
-            "label": labels[node_id].item(),
-        }
-        for node_id in np.unique(edges).tolist()
-    ]
+metadata = (
+    pd.DataFrame.from_dict(
+        [
+            {
+                "id": node_id,
+                "degree": G.degree(node_id),
+                "label": labels[node_id].item(),
+            }
+            for node_id in np.unique(edges).tolist()
+        ]
+    )
+    .sort_values(["label", "id"])
+    .reset_index()
 )
 draw_networkx_plotly(G, edges, layout, metadata).show()
 draw_heatmap_plotly(feat_normalised[metadata["id"]], metadata).show()
